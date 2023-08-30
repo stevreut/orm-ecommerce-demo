@@ -22,15 +22,18 @@ Product.init(
     },
     price: {
       type: DataTypes.DECIMAL,
-      allowNull: false
-      // TODO - value is decimal
-      // TODO - (not in req., but require >= 0?)
+      allowNull: false,
+      validate: {
+        isDecimal: true
+      }
     },
     stock: {
       type: DataTypes.INTEGER,
-      allowNull: false
-      // TODO - default to 10
-      // TODO - validate as numeric
+      allowNull: false,
+      defaultValue: 10,
+      validate: {
+        isNumeric: true
+      }
     },
     category_id: {
       type: DataTypes.INTEGER,
@@ -38,7 +41,7 @@ Product.init(
         model: 'category',
         key: 'id'
       },
-      onDelete: 'SET NULL'  // TODO - might be default, keep anyway?
+      onDelete: 'SET NULL'
     }
   },
   {
@@ -46,7 +49,7 @@ Product.init(
     timestamps: false,
     freezeTableName: true,
     underscored: true,
-    modelName: 'product',
+    modelName: 'product'
   }
 );
 
