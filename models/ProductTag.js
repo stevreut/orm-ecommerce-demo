@@ -14,12 +14,18 @@ ProductTag.init(
       // TODO - no null, linkage
     },
     product_id: {
-      type: DataTypes.INTEGER
-      // TODO - link to id of product
+      type: DataTypes.INTEGER,
+      references: {
+        model: 'product',
+        key: 'id'
+      }
     },
     tag_id: {
-      type: DataTypes.INTEGER
-      // TODO - link to id of tag
+      type: DataTypes.INTEGER,
+      references: {
+        model: 'tag',
+        key: 'id'
+      }
     }
     // NOTE / TODO - the above enable many-to-many linkage
     // between product and tag

@@ -33,8 +33,11 @@ Product.init(
       // TODO - validate as numeric
     },
     category_id: {
-      type: DataTypes.INTEGER
-      // TODO - link to id of category
+      type: DataTypes.INTEGER,
+      references: {
+        model: 'category',
+        key: 'id'
+      }
       // TODO - CAN be null (nothing needs be done - default behavior?)
     }
   },
