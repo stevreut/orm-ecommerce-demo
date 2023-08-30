@@ -13,22 +13,22 @@ Product.init(
     id: {
       type: DataTypes.INTEGER,
       primaryKey: true,
-      autoIncrement: true
-      // TODO - no null, linkage
+      autoIncrement: true,
+      allowNull: false
     },
     product_name: {
-      type: DataTypes.STRING
-      // TODO - no null
+      type: DataTypes.STRING,
+      allowNull: false
     },
     price: {
-      type: DataTypes.DECIMAL
-      // TODO - no null
+      type: DataTypes.DECIMAL,
+      allowNull: false
       // TODO - value is decimal
       // TODO - (not in req., but require >= 0?)
     },
     stock: {
-      type: DataTypes.INTEGER
-      // TODO - no null
+      type: DataTypes.INTEGER,
+      allowNull: false
       // TODO - default to 10
       // TODO - validate as numeric
     },
@@ -37,8 +37,8 @@ Product.init(
       references: {
         model: 'category',
         key: 'id'
-      }
-      // TODO - CAN be null (nothing needs be done - default behavior?)
+      },
+      onDelete: 'SET NULL'  // TODO - might be default, keep anyway?
     }
   },
   {
