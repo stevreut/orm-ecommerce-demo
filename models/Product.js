@@ -10,6 +10,33 @@ class Product extends Model {}
 Product.init(
   {
     // define columns
+    id: {
+      type: DataTypes.INTEGER,
+      primaryKey: true,
+      autoIncrement: true
+      // TODO - no null, linkage
+    },
+    product_name: {
+      type: DataTypes.STRING
+      // TODO - no null
+    },
+    price: {
+      type: DataTypes.DECIMAL
+      // TODO - no null
+      // TODO - value is decimal
+      // TODO - (not in req., but require >= 0?)
+    },
+    stock: {
+      type: DataTypes.INTEGER
+      // TODO - no null
+      // TODO - default to 10
+      // TODO - validate as numeric
+    },
+    category_id: {
+      type: DataTypes.INTEGER
+      // TODO - link to id of category
+      // TODO - CAN be null (nothing needs be done - default behavior?)
+    }
   },
   {
     sequelize,
