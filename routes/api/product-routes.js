@@ -5,25 +5,23 @@ const { Product, Category, Tag, ProductTag } = require('../../models');
 
 // The `/api/products` endpoint
 
-// get all products
+// gets all products
 router.get('/', async (req, res) => {
-  // find all products
-  // be sure to include its associated Category and Tag data
-  console.log('get prod all');
+  // finds all products including their associated 
+  // category and tag data
   try {
     const productData = await Product.findAll({
       include: [
         { 
           model: Category,
-          required: false 
+          required: false   // enables LEFT JOIN - thus products with or without categories
         },
         {
           model: Tag,
-          required: false
+          required: false   // enables LEFT JOIN - thus products with or without tags
         }
       ],
     });
-    console.log('get prod productData = ', productData);
     res.status(200).json(productData);
   } catch (err) {
     res.status(500).json(err);
@@ -32,8 +30,8 @@ router.get('/', async (req, res) => {
 
 // get one product
 router.get('/:id', async (req, res) => {
-  // find a single product by its `id`
-  // be sure to include its associated Category and Tag data
+  // finds a single product by its `id` and includes associated
+  // category and tag data
   try {
     const productData = await Product.findByPk(req.params.id, {
       include: [
@@ -43,12 +41,12 @@ router.get('/:id', async (req, res) => {
         },
         {
           model: Tag,
-          required: false  // TODO - LEFT JOIN, ...
+          required: false // enables LEFT JOIN, thereby showing products without tags
         }
       ]
     });
     if (!productData) {
-      res.status(404).json({ message: 'No product with this id found!' });
+      res.status(404).json({ message: 'No such product id' });
       return;
     }
     res.status(200).json(productData);
@@ -59,24 +57,31 @@ router.get('/:id', async (req, res) => {
 
 // create new product
 router.post('/', (req, res) => {
-  /* req.body should look like this...
-    {
-      product_name: "Basketball",
-      price: 200.00,
-      stock: 3,
-      tagIds: [1, 2, 3, 4]
-    }
-  */
+  // Expects a request in the form of the following
+  //
+  //  {
+  //    "product_name": "Basketball",
+  //    "price": 200.00,
+  //    "stock": 3,
+  //    "tagIds": [1, 2, 3, 4]
+  //  }
+  //
   Product.create(req.body)
     .then((product) => {
-      // if there's product tags, we need to create pairings to bulk create in the ProductTag model
+      // if there are product tags then we need to create pairings to
+      // bulk create in the ProductTag model
       if (req.body.tagIds.length) {
+        // Use 'map' to transform the array tagIds to an array of 
+        // objects tieing product_id and tag_id, enabling the
+        // creation of appropriate ProductTag bridge entries.
         const productTagIdArr = req.body.tagIds.map((tag_id) => {
           return {
             product_id: product.id,
             tag_id,
           };
         });
+        // Create the ProductTag bridge entries from the constructed
+        // array of linking objects.
         return ProductTag.bulkCreate(productTagIdArr);
       }
       // if no product tags, just respond
@@ -90,45 +95,56 @@ router.post('/', (req, res) => {
 });
 
 router.put('/:id', async (req, res) => {
-  // update product data
+  // update product data from request
   Product.update(req.body, {
     where: {
       id: req.params.id,
     },
   })
     .then((product) => {
+      // When product record creation is successful, create ProductTag entries
+      // based on the tagIds array in the request, unless it is missing or empty.
       if (req.body.tagIds && req.body.tagIds.length) {
+        // Retrieve all current ProductTag entries matching the product_id.
         ProductTag.findAll({
           where: { product_id: req.params.id }
         }).then((productTags) => {
-          // create filtered list of new tag_ids
+          // create filtered list of new tag_ids consisting of only the
+          // tag_ids which of only the tag_ids in the request which do
+          // not occur in productTags.
           const productTagIds = productTags.map(({ tag_id }) => tag_id);
           const newProductTags = req.body.tagIds
-          .filter((tag_id) => !productTagIds.includes(tag_id))
-          .map((tag_id) => {
-            return {
-              product_id: req.params.id,
-              tag_id,
-            };
-          });
+            .filter((tag_id) => !productTagIds.includes(tag_id))
+            .map((tag_id) => {
+              return {
+                product_id: req.params.id,
+                tag_id,
+              };
+            });
 
-            // figure out which ones to remove
+          // Figure out which ones to remove by creating a list of current
+          // ProductTag entries which do not match any of the tag_ids in the
+          // request.
           const productTagsToRemove = productTags
-          .filter(({ tag_id }) => !req.body.tagIds.includes(tag_id))
-          .map(({ product_id }) => product_id);
-                  // run both actions
+            .filter(({ tag_id }) => !req.body.tagIds.includes(tag_id))
+            .map(({ product_id }) => product_id);
+          // run both actions
           return Promise.all([
-            
-            ProductTag.destroy(
-              { where: { 
-                product_id: productTagsToRemove, 
-                tag_id: { 
-                  // [Op.ne]: req.body.tagIds
-                  [Op.notIn]: req.body.tagIds
-                } 
-              } 
-            }),
 
+            // Delete the ProductTag entries which do not correspond to the
+            // request's tag_ids.
+            ProductTag.destroy(
+              {
+                where: {
+                  product_id: productTagsToRemove,
+                  tag_id: {
+                    [Op.notIn]: req.body.tagIds  // effective an SQL "NOT IN" operator
+                  }
+                }
+              }),
+
+            // Create ProductTag entires for tag_ids in the request which had
+            // not previously had corresponding ProductTag entries.
             ProductTag.bulkCreate(newProductTags),
 
           ]);
@@ -144,24 +160,19 @@ router.put('/:id', async (req, res) => {
 
 router.delete('/:id', async (req, res) => {
   // delete one product by its `id` value
-  console.log('del prod this.id = ', this.id);
-  console.log('del prod req.params = ', req.params);
   try {
     const productData = await Product.destroy({
       where: {
         id: req.params.id
       }
     });
-    console.log('del productData = ', productData);
     if (!productData) {
-      console.log('del prod when falsy', productData);
-      res.status(404).json({ message: 'No product with specified ID was found to be deleted!' });
+      res.status(404).json({ message: 'No such product id' });
     } else {
       res.status(200).json(productData);
-      console.log('del prod when truthy ', productData);
     }
   } catch (err) {
-    res.status(500).json(err);  // TODO - 500?
+    res.status(500).json(err);
   }
 });
 
