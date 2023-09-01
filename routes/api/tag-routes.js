@@ -75,12 +75,48 @@ router.post('/', (req, res) => {
 
 });
 
-router.put('/:id', (req, res) => {
+router.put('/:id', async (req, res) => {
   // update a tag's name by its `id` value
+  try {
+    console.log ('put tag body = ', req.body);
+    console.log ('put tag id req.params.id = ', req.params.id);
+    const tagUpdateResult = await Tag.update(req.body, {
+      where: {
+        id: req.params.id,
+      },
+    });
+    console.log('put tagUpdateResult = ', tagUpdateResult);
+    if (!tagUpdateResult[0]) {
+      res.status(404).json({ message: 'No tag was found with requested id!' });  // TODO - is this a good return response (404)?
+      return;
+    }
+    res.status(200).json(tagUpdateResult);  // TODO - This is just '1' (numeric).  It follows the examples, but is it OK?
+  } catch (err) {
+    res.status(500).json(err);
+  }
 });
 
-router.delete('/:id', (req, res) => {
+router.delete('/:id', async (req, res) => {
   // delete on tag by its `id` value
+  console.log('del this.id = ', this.id);
+  console.log('del req.params = ', req.params);
+  try {
+    const tagData = await Tag.destroy({
+      where: {
+        id: req.params.id
+      }
+    });
+    console.log('del tagData = ', tagData);
+    if (!tagData) {
+      console.log('del tag when falsy', tagData);
+      res.status(404).json({ message: 'No tag with specified ID was found to be deleted!' });
+    } else {
+      res.status(200).json(tagData);
+      console.log('del tag when truthy ', tagData);
+    }
+  } catch (err) {
+    res.status(500).json(err);  // TODO - 500?
+  }
 });
 
 module.exports = router;
