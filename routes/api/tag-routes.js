@@ -22,18 +22,13 @@ router.get('/', async (req, res) => {
 router.get('/:id', async (req, res) => {
   // find a single tag by its `id`
   // be sure to include its associated Product data
-  console.log('tag get entry point');
   try {
-    console.log('tag get try');
-    console.log('tag get - req.params = ', req.params);
     const tagData = await Tag.findByPk(req.params.id, {
       include: [{
          model: Product, 
          required: false  // enables LEFT JOIN, thereby showing tags without associated products
         }]
     });
-    console.log('tag get complete');
-    console.log('tag data = ', tagData);
     if (!tagData) {
       res.status(404).json({ message: 'No tag with this id found!' });
       return;
@@ -78,19 +73,16 @@ router.post('/', (req, res) => {
 router.put('/:id', async (req, res) => {
   // update a tag's name by its `id` value
   try {
-    console.log ('put tag body = ', req.body);
-    console.log ('put tag id req.params.id = ', req.params.id);
     const tagUpdateResult = await Tag.update(req.body, {
       where: {
         id: req.params.id,
       },
     });
-    console.log('put tagUpdateResult = ', tagUpdateResult);
     if (!tagUpdateResult[0]) {
-      res.status(404).json({ message: 'No tag was found with requested id!' });  // TODO - is this a good return response (404)?
+      res.status(404).json({ message: 'No such tag id' });
       return;
     }
-    res.status(200).json(tagUpdateResult);  // TODO - This is just '1' (numeric).  It follows the examples, but is it OK?
+    res.status(200).json(tagUpdateResult);
   } catch (err) {
     res.status(500).json(err);
   }
@@ -98,24 +90,19 @@ router.put('/:id', async (req, res) => {
 
 router.delete('/:id', async (req, res) => {
   // delete on tag by its `id` value
-  console.log('del this.id = ', this.id);
-  console.log('del req.params = ', req.params);
   try {
     const tagData = await Tag.destroy({
       where: {
         id: req.params.id
       }
     });
-    console.log('del tagData = ', tagData);
     if (!tagData) {
-      console.log('del tag when falsy', tagData);
-      res.status(404).json({ message: 'No tag with specified ID was found to be deleted!' });
+      res.status(404).json({ message: 'No such tag id' });
     } else {
       res.status(200).json(tagData);
-      console.log('del tag when truthy ', tagData);
     }
   } catch (err) {
-    res.status(500).json(err);  // TODO - 500?
+    res.status(500).json(err);
   }
 });
 
